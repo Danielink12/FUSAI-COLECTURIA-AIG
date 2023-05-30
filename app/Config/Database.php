@@ -26,11 +26,11 @@ class Database extends Config
      */
     public array $default = [
         'DSN'      => '',
-        'hostname' => 'localhost',
-        'username' => '',
-        'password' => '',
-        'database' => '',
-        'DBDriver' => 'MySQLi',
+        'hostname' => '192.168.0.21',
+        'username' => 'sa',
+        'password' => '123',
+        'database' => 'COLECTURIA_AIG',
+        'DBDriver' => 'sqlsrv',
         'DBPrefix' => '',
         'pConnect' => false,
         'DBDebug'  => true,
@@ -41,7 +41,7 @@ class Database extends Config
         'compress' => false,
         'strictOn' => false,
         'failover' => [],
-        'port'     => 3306,
+        'port'     => 1433,
     ];
 
     /**

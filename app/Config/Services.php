@@ -19,6 +19,12 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+
+    public static function getSecretKey()
+    {
+        return $letter =  "fusaiorg"; //chr(rand(97,122));
+    }
+    
     /*
      * public static function example($getShared = true)
      * {
