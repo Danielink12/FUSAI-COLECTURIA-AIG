@@ -50,6 +50,7 @@ class Login extends BaseController
             //return view('dashboard');
 
             $newdata = [
+                'usuarioid' => $datos[0]->USUARIOID,
                 'usuario'  => $datos[0]->USUARIO,
                 'token'=>otorgarToken(),
                 'logged_in' => true
