@@ -13,7 +13,7 @@
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
             <!-- <li><a href="#" class="link-dark rounded">Overview</a></li> -->
             <!-- <li><a href="#" class="link-dark rounded">Updates</a></li> -->
-            <li><a href="/FPH/public/Home" class="link-dark rounded">Pagina principal</a></li>
+            <li><a href="<?php echo base_url(); ?>Home" class="link-dark rounded">Pagina principal</a></li>
           </ul>
         </div>
       </li>
@@ -36,10 +36,13 @@
         </button>
         <div class="collapse show" id="orders-collapse">
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-          <li><a href="/FPH/public/Solicitudes" class="link-dark rounded">Pagos</a></li>
-            <li><a href="/FPH/public/Clientes" class="link-dark rounded">Clientes</a></li>
-            <li><a href="/FPH/public/Usuarios" class="link-dark rounded">Usuarios</a></li>
-            <li><a href="/FPH/public/Usuarios" class="link-dark rounded">Agencias</a></li>
+          <li><a href="<?php echo base_url(); ?>Pagos" class="link-dark rounded">Pagos</a></li>
+            <li><a href="<?php echo base_url(); ?>Clientes" class="link-dark rounded">Clientes</a></li>
+            <li><a href="<?php echo base_url(); ?>Usuarios" class="link-dark rounded">Usuarios</a></li>
+            <li><a href="<?php echo base_url(); ?>Colectores" class="link-dark rounded">Colectores</a></li>
+            <li><a href="<?php echo base_url(); ?>FormaPago" class="link-dark rounded">Formas de pago</a></li>
+            <li><a href="<?php echo base_url(); ?>TipoPago" class="link-dark rounded">Tipos de pago</a></li>
+            <li><a href="<?php echo base_url(); ?>Agencias" class="link-dark rounded">Agencias</a></li>
             <?php // $link="/FPH/public/Usuario"; $class="link-dark rounded"; if($tipousuarioid==1){ echo "<li><a href=".$link." class=".$class.">Usuarios</a></li>"; } ?>
           </ul>
         </div>
@@ -51,9 +54,9 @@
         </button>
         <div class="collapse show" id="order-collapse">
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-          <li><a href="/FPH/public/Reportes/mapa" class="link-dark rounded">Mapa</a></li>
+          <!-- <li><a href="/FPH/public/Reportes/mapa" class="link-dark rounded">Mapa</a></li> -->
             <!-- <li><a href="/FPH/public/Categoria" class="link-dark rounded">PDF</a></li> -->
-            <li><a href="/FPH/public/Reportes/filtrosexcel" class="link-dark rounded">Excel</a></li>
+            <!-- <li><a href="/FPH/public/Reportes/filtrosexcel" class="link-dark rounded">Excel</a></li> -->
             <?php // $link="/FPH/public/Usuario"; $class="link-dark rounded"; if($tipousuarioid==1){ echo "<li><a href=".$link." class=".$class.">Usuarios</a></li>"; } ?>
           </ul>
         </div>
@@ -66,7 +69,7 @@
         <div class="collapse show" id="account-collapse">
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
             <!-- <li><a href="#" class="link-dark rounded">New...</a></li> -->
-            <li><a href="/FPH/public/Home/cerrarSesion" class="link-dark rounded">Cerrar Sesión</a></li>
+            <li><a href="<?php echo base_url(); ?>Home/cerrarSesion" class="link-dark rounded">Cerrar Sesión</a></li>
           </ul>
         </div>
       </li>
