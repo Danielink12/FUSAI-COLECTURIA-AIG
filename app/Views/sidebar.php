@@ -43,6 +43,7 @@
             <li><a href="<?php echo base_url(); ?>FormaPago" class="link-dark rounded">Formas de pago</a></li>
             <li><a href="<?php echo base_url(); ?>TipoPago" class="link-dark rounded">Tipos de pago</a></li>
             <li><a href="<?php echo base_url(); ?>Agencias" class="link-dark rounded">Agencias</a></li>
+            <li><a href="<?php echo base_url(); ?>Accesos" class="link-dark rounded">Accesos</a></li>
             <?php // $link="/FPH/public/Usuario"; $class="link-dark rounded"; if($tipousuarioid==1){ echo "<li><a href=".$link." class=".$class.">Usuarios</a></li>"; } ?>
           </ul>
         </div>
@@ -56,7 +57,7 @@
           <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">
           <!-- <li><a href="/FPH/public/Reportes/mapa" class="link-dark rounded">Mapa</a></li> -->
             <!-- <li><a href="/FPH/public/Categoria" class="link-dark rounded">PDF</a></li> -->
-            <!-- <li><a href="/FPH/public/Reportes/filtrosexcel" class="link-dark rounded">Excel</a></li> -->
+            <li><a href="<?php echo base_url(); ?>Reportes/filtrosexcel" class="link-dark rounded">Excel</a></li>
             <?php // $link="/FPH/public/Usuario"; $class="link-dark rounded"; if($tipousuarioid==1){ echo "<li><a href=".$link." class=".$class.">Usuarios</a></li>"; } ?>
           </ul>
         </div>
