@@ -25,7 +25,7 @@ class Pagos extends BaseController
         
             $db = \Config\Database::connect();
             $table = new \CodeIgniter\View\Table();
-            $query = $db->query("SELECT P.PAGOID,A.AGENCIA,TP.TIPOPAGO,C.COLECTOR,TM.TIPOMOVIMIENTO,MONTO,ANULADO,FECHAREG
+            $query = $db->query("SELECT P.PAGOID,IIF(dbo.FNNOMBRECLIENTE(P.CLIENTEID)<>'',dbo.FNNOMBRECLIENTE(P.CLIENTEID),(SELECT cnomcli FROM INTEGRAL.dbo.climide WHERE ccodcli=P.CLIENTEID)) AS CLIENTE,P.REFERENCIA,A.AGENCIA,TP.TIPOPAGO,C.COLECTOR,TM.TIPOMOVIMIENTO,'$'+CONVERT(NVARCHAR(10),MONTO) AS MONTO,ANULADO,FECHAREG
                                 FROM PAGO P
                                 INNER JOIN AGENCIA A ON P.AGENCIAID=A.AGENCIAID
                                 INNER JOIN TIPOPAGO TP ON P.TIPOPAGOID=TP.TIPOPAGOID
@@ -39,10 +39,11 @@ class Pagos extends BaseController
             
             $table->setTemplate($template);
 
-            $table->setHeading('AGENCIA', 'TIPO DE PAGO', 'COLECTOR', 'MOVIMIENTO', 'MONTO','ESTADO','ACCIONES');
+            $table->setHeading('AGENCIA', 'CLIENTE','TIPO DE PAGO', 'COLECTOR', 'MOVIMIENTO', 'MONTO','ESTADO','ACCIONES');
 
             foreach ($query->getResult() as $row) {
                 
+                $row->CLIENTE;
                 $row->AGENCIA;
                 $row->TIPOPAGO;
                 $row->COLECTOR;
@@ -55,7 +56,7 @@ class Pagos extends BaseController
                     $estado="ANULADO";
                 }
 
-                $links  = '<a class="btn btn-primary" href="#" role="button">RECIBO</a>';
+                $links  = '<a class="btn btn-primary" href="Reportes/reciboPago/'.$row->PAGOID.'/'.$row->REFERENCIA.'" role="button">RECIBO</a>';
                
                 if(($row->ANULADO)==0){
                     $links .= '<a class="btn btn-danger" href="Pagos/anularaplicarpago/'.$row->PAGOID.'/'.$row->ANULADO.'" role="button">ANULAR</a>';
@@ -64,7 +65,7 @@ class Pagos extends BaseController
                 }
                 //$links .= '<a class="btn btn-danger" href="Categoria/eliminarCategoria/'.$row->CATEGORIAID.'" role="button">ELIMINAR</a>';
 
-                $table->addRow($row->AGENCIA,$row->TIPOPAGO,$row->COLECTOR,$row->TIPOMOVIMIENTO,$row->MONTO,$estado, $links);
+                $table->addRow($row->AGENCIA,$row->CLIENTE,$row->TIPOPAGO,$row->COLECTOR,$row->TIPOMOVIMIENTO,$row->MONTO,$estado, $links);
             }
 
             $datos_dinamicos = [
@@ -92,6 +93,37 @@ class Pagos extends BaseController
         $tipomovimiento = $db->query("SELECT * FROM TIPOMOVIMIENTO");
         $formapago = $db->query("SELECT * FROM FORMAPAGO");
 
+        $table = new \CodeIgniter\View\Table();
+        $query = $db->query("SELECT CLIENTE.ccodcli as CLIENTEID,CLIENTE.cnomcli AS NOMBRE,CLIENTE.cnudoci AS DPI, CREDITO.ccodcta AS REFERENCIA, CREDITO.nmonapr AS MONTO
+                            FROM INTEGRAL.dbo.climide CLIENTE
+                            INNER JOIN INTEGRAL.dbo.cremcre CREDITO ON CLIENTE.ccodcli=CREDITO.ccodcli
+                            WHERE cestado='F'
+                            UNION
+                            SELECT C.CLIENTEID,dbo.FNNOMBRECLIENTE(C.CLIENTEID),C.DPI,'0',NULL
+                            FROM CLIENTE C");
+            $resultado = $query->getResult();
+
+            $template = [
+                'table_open' => '<table id="example" class="table table-hover" style="width:100%">'
+            ];
+            
+            $table->setTemplate($template);
+
+            $table->setHeading('NOMBRE', 'DPI', 'REFERENCIA', 'MONTO DEL CREDITO','ACCIONES');
+
+            foreach ($query->getResult() as $row) {
+                
+                $row->NOMBRE;
+                $row->DPI;
+                $row->REFERENCIA;
+                $row->MONTO;
+
+                $links  = '<a class="btn btn-primary" href="getInfoC/'.$row->CLIENTEID.'/'.$row->NOMBRE.'/'.$row->REFERENCIA.'" role="button">SELECCIONAR</a>';
+                //$links .= '<a class="btn btn-danger" href="Categoria/eliminarCategoria/'.$row->CATEGORIAID.'" role="button">ELIMINAR</a>';
+
+                $table->addRow($row->NOMBRE,$row->DPI,$row->REFERENCIA,$row->MONTO, $links);
+            }
+
 
         $datos_dinamicos = [
             'title' => 'AIG - Nuevo Pago',
@@ -99,12 +131,84 @@ class Pagos extends BaseController
             //'tipousuarioid' => $this->$session->tipousuarioid,
             'content' => 'creareditarpagos',
             'datosPago' => array(null),
+            'data' => $table->generate(),
             'agencias' =>$agencias,
             'tipopago' => $tipopago,
             'colectores' => $colectores,
             'tipomovimiento' => $tipomovimiento,
             'formapago' => $formapago,
             'nuevo' => TRUE,
+            'ref' => "",
+            'clienteid' => null,
+            'cliente' => null,
+            'clienteelegido' => FALSE,
+            'seccion' => 'NUEVO PAGO',
+            'txtbtn' => 'CREAR PAGO',
+            'urlpost' => 'Pagos/crearPago'
+        ];
+        
+        return view('dashboard',$datos_dinamicos);
+    }
+
+    public function getInfoC($clienteid,$cliente,$ref){
+        $db = \Config\Database::connect();
+
+        $agencias = $db->query("SELECT * FROM AGENCIA");
+        $tipopago = $db->query("SELECT * FROM TIPOPAGO");
+        $colectores = $db->query("SELECT * FROM COLECTOR");
+        $tipomovimiento = $db->query("SELECT * FROM TIPOMOVIMIENTO");
+        $formapago = $db->query("SELECT * FROM FORMAPAGO");
+
+        $table = new \CodeIgniter\View\Table();
+        $query = $db->query("SELECT CLIENTE.ccodcli as CLIENTEID,CLIENTE.cnomcli AS NOMBRE,CLIENTE.cnudoci AS DPI, CREDITO.ccodcta AS REFERENCIA, CREDITO.nmonapr AS MONTO
+                            FROM INTEGRAL.dbo.climide CLIENTE
+                            INNER JOIN INTEGRAL.dbo.cremcre CREDITO ON CLIENTE.ccodcli=CREDITO.ccodcli
+                            WHERE cestado='F'
+                            UNION
+                            SELECT C.CLIENTEID,dbo.FNNOMBRECLIENTE(C.CLIENTEID),C.DPI,'0',NULL
+                            FROM CLIENTE C");
+            $resultado = $query->getResult();
+
+            $template = [
+                'table_open' => '<table id="example" class="table table-hover" style="width:100%">'
+            ];
+            
+            $table->setTemplate($template);
+
+            $table->setHeading('NOMBRE', 'DPI', 'REFERENCIA', 'MONTO DEL CREDITO','ACCIONES');
+
+            foreach ($query->getResult() as $row) {
+                
+                $row->NOMBRE;
+                $row->DPI;
+                $row->REFERENCIA;
+                $row->MONTO;
+
+                $links=null;
+                $links  = '<a class="btn btn-primary" href="/Colecturia-AIG/public/Pagos/getInfoC/'.$row->CLIENTEID.'/'.$row->NOMBRE.'/'.$row->REFERENCIA.'" role="button">SELECCIONAR</a>';
+                //$links .= '<a class="btn btn-danger" href="Categoria/eliminarCategoria/'.$row->CATEGORIAID.'" role="button">ELIMINAR</a>';
+
+                $table->addRow($row->NOMBRE,$row->DPI,$row->REFERENCIA,$row->MONTO, $links);
+            }
+
+
+        $datos_dinamicos = [
+            'title' => 'AIG - Nuevo Pago',
+            //'nombresession' => $this->$session->nombre,
+            //'tipousuarioid' => $this->$session->tipousuarioid,
+            'content' => 'creareditarpagos',
+            'datosPago' => array(null),
+            'data' => $table->generate(),
+            'agencias' =>$agencias,
+            'tipopago' => $tipopago,
+            'colectores' => $colectores,
+            'tipomovimiento' => $tipomovimiento,
+            'formapago' => $formapago,
+            'nuevo' => TRUE,
+            'ref' => $ref,
+            'clienteid' => $clienteid,
+            'cliente' => $cliente,
+            'clienteelegido' => TRUE,
             'seccion' => 'NUEVO PAGO',
             'txtbtn' => 'CREAR PAGO',
             'urlpost' => 'Pagos/crearPago'
@@ -123,13 +227,19 @@ class Pagos extends BaseController
         $colectorid = $_POST['colectorid'];
         $tipomovimientoid = $_POST['tipomovimientoid'];
         $formapagoid = $_POST['formapagoid'];
-        $referencia = $_POST['referencia'];
+        $clienteid = $_POST['clienteid'];
+        $ref = $_POST['referencia'];
         $monto = $_POST['monto'];
         $usuarioreg = $session->get('usuarioid');
 
         try {
+
+            if($clienteid==null){
+                $query = $db->query("INSERT INTO PAGO (AGENCIAID,TIPOPAGOID,COLECTORID,TIPOMOVIMIENTOID,FORMAPAGOID,REFERENCIA,MONTO,USUARIOREG,ANULADO) VALUES(".$agenciaid.",".$tipopagoid.",".$colectorid.",".$tipomovimientoid.",".$formapagoid.",'".$ref."',".$monto.",".$usuarioreg.",0)");
+            }else{
+                $query = $db->query("INSERT INTO PAGO (AGENCIAID,CLIENTEID,TIPOPAGOID,COLECTORID,TIPOMOVIMIENTOID,FORMAPAGOID,REFERENCIA,MONTO,USUARIOREG,ANULADO) VALUES(".$agenciaid.",".$clienteid.",".$tipopagoid.",".$colectorid.",".$tipomovimientoid.",".$formapagoid.",'".$ref."',".$monto.",".$usuarioreg.",0)");
+            }
             //code...
-            $query = $db->query("INSERT INTO PAGO (AGENCIAID,TIPOPAGOID,COLECTORID,TIPOMOVIMIENTOID,FORMAPAGOID,REFERENCIA,MONTO,USUARIOREG,ANULADO) VALUES(".$agenciaid.",".$tipopagoid.",".$colectorid.",".$tipomovimientoid.",".$formapagoid.",'".$referencia."',".$monto.",".$usuarioreg.",0)");
             return redirect()->to(site_url('Pagos'));
         } catch (\Throwable $th) {
             //throw $th;
