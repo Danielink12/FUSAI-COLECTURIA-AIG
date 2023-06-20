@@ -58,6 +58,7 @@
           <!-- <li><a href="/FPH/public/Reportes/mapa" class="link-dark rounded">Mapa</a></li> -->
             <!-- <li><a href="/FPH/public/Categoria" class="link-dark rounded">PDF</a></li> -->
             <li><a href="<?php echo base_url(); ?>Reportes/filtrosexcel" class="link-dark rounded">Excel</a></li>
+            <li><a href="<?php echo base_url(); ?>Reportes/filtrosLiquidacion" class="link-dark rounded">Liquidacion</a></li>
             <?php // $link="/FPH/public/Usuario"; $class="link-dark rounded"; if($tipousuarioid==1){ echo "<li><a href=".$link." class=".$class.">Usuarios</a></li>"; } ?>
           </ul>
         </div>

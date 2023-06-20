@@ -1,4 +1,4 @@
-<div class="tablas">
+<div class="formdivagencias">
     <h2 class="titulo">REPORTE EXCEL</h2>
     <form class="row g-3" method="post" action="<?= $urlpost ?>">
         <div class="col-md-6">

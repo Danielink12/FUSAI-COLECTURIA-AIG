@@ -24,7 +24,7 @@ class Reportes extends BaseController
                                 ORDER BY CLIENTE ASC");
 
         $datos_dinamicos = [
-            'title' => 'FPH - Excel',
+            'title' => 'AIG - Excel',
             //'nombresession' => $this->$session->nombre,
             //'tipousuarioid' => $this->$session->tipousuarioid,
             'colectores' => $colectores,
@@ -169,7 +169,7 @@ class Reportes extends BaseController
 
             $writerr = new \xlsxwriter();
 
-            $filename = "REPORTE_CONSOLIDADOS_FPH.xlsx";
+            $filename = "REPORTE.xlsx";
             header('Content-disposition: attachment; filename="'.$writerr::sanitize_filename($filename).'"');
             header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             header('Content-Transfer-Encoding: binary');
@@ -209,7 +209,9 @@ class Reportes extends BaseController
             $writer->writeToStdOut();
             exit(0);
         }else{
-            echo "<script>alert('No se encontraron registros.') </script>";  
+            echo "<script>alert('No se encontraron registros.') </script>";
+            //sleep(10);  
+            //return redirect()->to(site_url('Reportes/filtrosexcel'));
             // Redircet to Home Page		
             //echo "<script language=\"javascript\">window.location = '".	site_url('/bankcode/swift_code_report')."'  </script>";
         }
@@ -232,4 +234,128 @@ class Reportes extends BaseController
         $output = $ssrs->render('PDF'); // PDF | XML | CSV
         $output->download($referencia.'_'.date("Y-m-d").'.pdf');
     }
+
+    public function filtrosLiquidacion(){
+
+        $db = \Config\Database::connect();
+
+        $liqpendientes = $db->query("SELECT MIN(FORMAT(P.FECHAREG,'dd-MM-yyyy hh:mm:ss')) AS FECHA
+                                    FROM PAGO P 
+                                    FULL OUTER JOIN PAGOXLIQUIDACION PL ON P.PAGOID=PL.PAGOID
+                                    WHERE P.PAGOID IS NULL OR PL.PAGOID IS NULL");
+
+        $datos_dinamicos = [
+            'title' => 'AIG - Liquidacion',
+            //'nombresession' => $this->$session->nombre,
+            //'tipousuarioid' => $this->$session->tipousuarioid,
+            'liqpendiente' => $liqpendientes->getResult(),
+            'urlpost' => 'comprobacionLiquidacion',
+            'content' => 'filtrosliquidacion'
+        ];
+        
+        return view('dashboard',$datos_dinamicos);
+
+    }
+
+    public function comprobacionLiquidacion(){
+
+        $db = \Config\Database::connect();
+
+        $desde = $_POST['desde'];
+        $hasta = $_POST['hasta'];
+
+        $table = new \CodeIgniter\View\Table();
+
+        $query = $db->query("SELECT A.AGENCIA,IIF(dbo.FNNOMBRECLIENTE(P.CLIENTEID)<>'',dbo.FNNOMBRECLIENTE(P.CLIENTEID),(SELECT cnomcli FROM INTEGRAL.dbo.climide WHERE ccodcli=P.CLIENTEID)) AS CLIENTE,C.COLECTOR,TM.TIPOMOVIMIENTO,TP.TIPOPAGO,FP.FORMAPAGO,P.MONTO,(FORMAT (P.FECHAREG,'dd/MM/yyyy hh:mm:ss')) AS FECHAREG,dbo.FNNOMBREUSUARIO(P.USUARIOREG) AS USUARIO
+                            FROM PAGO P 
+                            INNER JOIN TIPOMOVIMIENTO TM ON P.TIPOMOVIMIENTOID=TM.TIPOMOVIMIENTOID
+                            INNER JOIN AGENCIA A ON P.AGENCIAID=A.AGENCIAID
+                            INNER JOIN TIPOPAGO TP ON P.TIPOPAGOID=TP.TIPOPAGOID
+                            INNER JOIN FORMAPAGO FP ON P.FORMAPAGOID=FP.FORMAPAGOID
+                            INNER JOIN COLECTOR C ON P.COLECTORID=C.COLECTORID
+                            FULL OUTER JOIN PAGOXLIQUIDACION PL ON P.PAGOID=PL.PAGOID
+                            WHERE P.PAGOID IS NULL OR PL.PAGOID IS NULL AND (FORMAT (P.FECHAREG,'dd/MM/yyyy') BETWEEN '".$desde."' AND '".$hasta."')");
+
+        $resultado = $query->getResult();
+
+        $template = [
+            'table_open' => '<table id="example" class="table table-hover" style="width:100%">'
+        ];
+
+        $table->setTemplate($template);
+
+        $table->setHeading('AGENCIA', 'CLIENTE','TIPO DE PAGO', 'COLECTOR', 'MOVIMIENTO', 'MONTO' ,'USUARIO', 'P.FECHAREG');
+
+        foreach ($query->getResult() as $row) {
+            
+            $row->CLIENTE;
+            $row->AGENCIA;
+            $row->TIPOPAGO;
+            $row->COLECTOR;
+            $row->TIPOMOVIMIENTO;
+            $row->MONTO;
+            $row->USUARIO;
+            $row->FECHAREG;
+
+            $table->addRow($row->AGENCIA,$row->CLIENTE,$row->TIPOPAGO,$row->COLECTOR,$row->TIPOMOVIMIENTO,$row->MONTO,$row->USUARIO,$row->FECHAREG);
+        }
+
+        $querypendientes = $db->query("SELECT MIN(FORMAT(P.FECHAREG,'dd-MM-yyyy hh:mm:ss')) AS FECHA 
+                                    FROM PAGO P
+                                    FULL OUTER JOIN PAGOXLIQUIDACION PL ON P.PAGOID=PL.PAGOID
+                                    WHERE P.PAGOID IS NULL OR PL.PAGOID IS NULL AND (FORMAT (P.FECHAREG,'dd/MM/yyyy') < '".$desde."')");
+
+        $datos_dinamicos = [
+            'title' => 'AIG - Comprobacion',
+            //'nombresession' => $this->$session->nombre,
+            //'tipousuarioid' => $this->$session->tipousuarioid,
+            'qpendientes' => $querypendientes->getResult(),
+            'qpendientesn' => $query->getNumRows(),
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'content' => 'comprobacionliq',
+            'data' => $table->generate(),
+            'urlpost' => 'liquidacion'
+        ];
+
+        return view('dashboard',$datos_dinamicos);
+
+    }
+
+    public function liquidacionPDF($liquidacionid){
+        $ssrs = new \SSRS\Report('http://192.168.0.17/reportserver/', array('username' => 'administrator', 'password' => 'password$1'));
+        //$ssrs->listChildren('/');
+
+        $result = $ssrs->loadReport('/COLECTURIA/liquidacion');
+        
+        $ssrs->setSessionId($result->executionInfo->ExecutionID);
+        $ssrs->setExecutionParameters(new \SSRS\Object\ExecutionParameters(
+            array(
+                "LIQUIDACIONID"=>$liquidacionid
+            )
+        ));
+        
+        $output = $ssrs->render('PDF'); // PDF | XML | CSV
+        $output->download('LIQUIDACION_'.date("Y-m-d").'.pdf');
+    }
+
+    public function liquidacion(){
+
+        $desde = $_POST['desde'];
+        $hasta = $_POST['hasta'];
+
+        $db = \Config\Database::connect();
+        $session = session();
+
+        $query = $db->query("EXEC SPLIQUIDACION '".$desde."','".$hasta."',".$session->usuarioid);
+        $liquidacioninsertada = $query->getResult();
+
+        return redirect()->to(site_url('Reportes/filtrosLiquidacion'));
+        
+        $this->liquidacionPDF($liquidacioninsertada[0]->LIQUIDACION);
+
+
+
+    }
+
 }

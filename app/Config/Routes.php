@@ -39,6 +39,7 @@ $routes->get('Agencias/vistaCrearAgencia','Agencias::vistaCrearAgencia');
 $routes->post('Agencias/crearAgencia','Agencias::crearAgencia');
 $routes->get('Agencias/vistaEditarAgencia/(:num)','Agencias::vistaEditarAgencia/$1');
 $routes->post('Agencias/editarAgencia','Agencias::editarAgencia');
+$routes->get('Agencias/activardesactivaragencia/(:num)/(:num)','Agencias::activardesactivaragencia/$1/$2');
 $routes->get('Colectores','Colectores::index');
 $routes->get('Colectores/vistaCrearColector','Colectores::vistaCrearColector');
 $routes->post('Colectores/crearColector','Colectores::crearColector');
@@ -72,6 +73,15 @@ $routes->get('Pagos','Pagos::index');
 $routes->get('Pagos/vistaCrearPago','Pagos::vistaCrearPago');
 $routes->post('Pagos/crearPago','Pagos::crearPago');
 $routes->get('Pagos/anularaplicarpago/(:num)/(:num)','Pagos::anularaplicarpago/$1/$2');
+$routes->get('Pagos/getInfoC/(:any)/(:any)/(:any)','Pagos::getInfoC/$1/$2/$3');
+$routes->get('Reportes/filtrosexcel','Reportes::filtrosexcel');
+$routes->get('Reportes/filtrosLiquidacion','Reportes::filtrosLiquidacion');
+$routes->post('Reportes/comprobacionLiquidacion','Reportes::comprobacionLiquidacion');
+$routes->post('Reportes/reporteexcel','Reportes::reporteexcel');
+$routes->post('Reportes/liquidacion','Reportes::liquidacion');
+$routes->get('Reportes/reciboPago/(:num)/(:any)','Reportes::reciboPago/$1/$2');
+$routes->get('Reportes/liquidacionPDF/(:num)','Reportes::liquidacionPDF/$1');
+$routes->get('Accesos','Accesos::index');
 
 /*
  * --------------------------------------------------------------------
