@@ -219,7 +219,7 @@ class Reportes extends BaseController
     }
 
     public function reciboPago($pagoid,$referencia){
-        $ssrs = new \SSRS\Report('http://192.168.0.17/reportserver/', array('username' => 'administrator', 'password' => 'password$1'));
+        $ssrs = new \SSRS\Report('http://192.168.11.122/reportserver/', array('username' => 'administrator', 'password' => 'password$1'));
         //$ssrs->listChildren('/');
 
         $result = $ssrs->loadReport('/COLECTURIA/recibo');
@@ -244,11 +244,84 @@ class Reportes extends BaseController
                                     FULL OUTER JOIN PAGOXLIQUIDACION PL ON P.PAGOID=PL.PAGOID
                                     WHERE P.PAGOID IS NULL OR PL.PAGOID IS NULL");
 
+        $tablapendientes = new \CodeIgniter\View\Table();
+
+        $query = $db->query("SELECT A.AGENCIA,IIF(dbo.FNNOMBRECLIENTE(P.CLIENTEID)<>'',dbo.FNNOMBRECLIENTE(P.CLIENTEID),(SELECT cnomcli FROM INTEGRAL.dbo.climide WHERE ccodcli=P.CLIENTEID)) AS CLIENTE,C.COLECTOR,TM.TIPOMOVIMIENTO,TP.TIPOPAGO,FP.FORMAPAGO,P.MONTO,(FORMAT (P.FECHAREG,'dd/MM/yyyy hh:mm:ss')) AS FECHAREG,dbo.FNNOMBREUSUARIO(P.USUARIOREG) AS USUARIO
+                            FROM PAGO P 
+                            INNER JOIN TIPOMOVIMIENTO TM ON P.TIPOMOVIMIENTOID=TM.TIPOMOVIMIENTOID
+                            INNER JOIN AGENCIA A ON P.AGENCIAID=A.AGENCIAID
+                            INNER JOIN TIPOPAGO TP ON P.TIPOPAGOID=TP.TIPOPAGOID
+                            INNER JOIN FORMAPAGO FP ON P.FORMAPAGOID=FP.FORMAPAGOID
+                            INNER JOIN COLECTOR C ON P.COLECTORID=C.COLECTORID
+                            FULL OUTER JOIN PAGOXLIQUIDACION PL ON P.PAGOID=PL.PAGOID
+                            WHERE P.PAGOID IS NULL OR PL.PAGOID IS NULL");
+
+        $resultado = $query->getResult();
+
+        $template = [
+            'table_open' => '<table id="example" class="table table-hover" style="width:100%">'
+        ];
+
+        $tablapendientes->setTemplate($template);
+
+        $tablapendientes->setHeading('AGENCIA', 'CLIENTE','TIPO DE PAGO', 'COLECTOR', 'MOVIMIENTO', 'MONTO' ,'USUARIO', 'P.FECHAREG');
+
+        foreach ($query->getResult() as $row) {
+            
+            $row->CLIENTE;
+            $row->AGENCIA;
+            $row->TIPOPAGO;
+            $row->COLECTOR;
+            $row->TIPOMOVIMIENTO;
+            $row->MONTO;
+            $row->USUARIO;
+            $row->FECHAREG;
+
+            $tablapendientes->addRow($row->AGENCIA,$row->CLIENTE,$row->TIPOPAGO,$row->COLECTOR,$row->TIPOMOVIMIENTO,$row->MONTO,$row->USUARIO,$row->FECHAREG);
+        }
+
+        $tablaliquidaciones = new \CodeIgniter\View\Table();
+
+        $query = $db->query("SELECT P.LIQUIDACIONID,
+                            FORMAT (P.DESDE,'dd/MM/yyyy') AS DESDE,
+                            FORMAT (P.HASTA,'dd/MM/yyyy') AS HASTA,
+                            (SELECT '$'+CONVERT(NVARCHAR(10),SALDOFINAL) AS SALDOINICIAL FROM (SELECT ROW_NUMBER() OVER(ORDER BY LIQUIDACIONID) AS FILA,SALDOFINAL FROM LIQUIDACION) AS X WHERE X.FILA=P.LIQUIDACIONID-1) AS SALDOINICIAL,
+                            '$'+CONVERT(NVARCHAR(10),P.SALDOFINAL) AS SALDOFINAL,
+                            dbo.FNNOMBREUSUARIO(P.USUARIOREG) AS USUARIO,
+                            P.FECHAREG
+                            FROM LIQUIDACION P");
+
+        $resultado = $query->getResult();
+
+        $template = [
+            'table_open' => '<table id="example" class="table table-hover" style="width:100%">'
+        ];
+
+        $tablaliquidaciones->setTemplate($template);
+
+        $tablaliquidaciones->setHeading('DESDE', 'HASTA','SALDO INICIAL','SALDO FINAL', 'USUARIO', 'FECHA','ACCIONES');
+
+        foreach ($query->getResult() as $row) {
+            
+            $row->DESDE;
+            $row->HASTA;
+            $row->SALDOINICIAL;
+            $row->SALDOFINAL;
+            $row->USUARIO;
+            $row->FECHAREG;
+
+            $links  = '<a class="btn btn-primary" href="liquidacionPDF/'.$row->LIQUIDACIONID.'" role="button">DESCARGAR PDF</a>';
+
+            $tablaliquidaciones->addRow($row->DESDE,$row->HASTA,$row->SALDOINICIAL,$row->SALDOFINAL,$row->USUARIO,$row->FECHAREG,$links);
+        }
+
         $datos_dinamicos = [
             'title' => 'AIG - Liquidacion',
             //'nombresession' => $this->$session->nombre,
             //'tipousuarioid' => $this->$session->tipousuarioid,
             'liqpendiente' => $liqpendientes->getResult(),
+            'tablapendientes' => $tablapendientes->generate(),
+            'tablaliquidaciones' => $tablaliquidaciones->generate(),
             'urlpost' => 'comprobacionLiquidacion',
             'content' => 'filtrosliquidacion'
         ];
@@ -323,7 +396,7 @@ class Reportes extends BaseController
     }
 
     public function liquidacionPDF($liquidacionid){
-        $ssrs = new \SSRS\Report('http://192.168.0.17/reportserver/', array('username' => 'administrator', 'password' => 'password$1'));
+        $ssrs = new \SSRS\Report('http://192.168.11.122/reportserver/', array('username' => 'administrator', 'password' => 'password$1'));
         //$ssrs->listChildren('/');
 
         $result = $ssrs->loadReport('/COLECTURIA/liquidacion');
@@ -350,11 +423,9 @@ class Reportes extends BaseController
         $query = $db->query("EXEC SPLIQUIDACION '".$desde."','".$hasta."',".$session->usuarioid);
         $liquidacioninsertada = $query->getResult();
 
-        return redirect()->to(site_url('Reportes/filtrosLiquidacion'));
         
         $this->liquidacionPDF($liquidacioninsertada[0]->LIQUIDACION);
-
-
+        return redirect()->to(site_url('filtrosLiquidacion'));
 
     }
 
