@@ -82,6 +82,8 @@ $routes->post('Reportes/liquidacion','Reportes::liquidacion');
 $routes->get('Reportes/reciboPago/(:num)/(:any)','Reportes::reciboPago/$1/$2');
 $routes->get('Reportes/liquidacionPDF/(:num)','Reportes::liquidacionPDF/$1');
 $routes->get('Accesos','Accesos::index');
+$routes->post('Accesos/setAcceso','Accesos::setAcceso');
+$routes->get('Accesos/getAcceso/(:num)/(:num)','Accesos::getAcceso/$1/$2');
 
 /*
  * --------------------------------------------------------------------
